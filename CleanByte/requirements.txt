@@ -6,8 +6,11 @@ astroid==2.4.2
 Babel==2.8.0
 backcall==0.2.0
 breezy==3.1.0
+<<<<<<< HEAD
 Brlapi==0.7.0
 btrfsutil==1.2.0
+=======
+>>>>>>> 62d02ad2db4829cb293f0e6ef6fd3d33b3c17c01
 CacheControl==0.12.6
 chardet==3.0.4
 colorama==0.4.3
@@ -21,14 +24,20 @@ docutils==0.16
 html5lib==1.1
 idna==2.10
 imagesize==1.2.0
+<<<<<<< HEAD
 ipython==7.18.1
+=======
+>>>>>>> 62d02ad2db4829cb293f0e6ef6fd3d33b3c17c01
 ipython-genutils==0.1.0
 isort==5.5.1
 jedi==0.17.2
 Jinja2==2.11.2
 lazy-object-proxy==1.5.1
+<<<<<<< HEAD
 lensfun==0.3.95
 louis==3.15.0
+=======
+>>>>>>> 62d02ad2db4829cb293f0e6ef6fd3d33b3c17c01
 lxml==4.5.2
 MarkupSafe==1.1.1
 mccabe==0.6.1
@@ -44,7 +53,10 @@ pickleshare==0.7.5
 progress==1.5
 prompt-toolkit==3.0.7
 ptyprocess==0.6.0
+<<<<<<< HEAD
 pwquality==1.4.2
+=======
+>>>>>>> 62d02ad2db4829cb293f0e6ef6fd3d33b3c17c01
 pycairo==1.19.1
 pycodestyle==2.6.0
 pyflakes==2.2.0
@@ -69,7 +81,10 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.4
 sqlparse==0.3.1
+<<<<<<< HEAD
 team==1.0
+=======
+>>>>>>> 62d02ad2db4829cb293f0e6ef6fd3d33b3c17c01
 toml==0.10.1
 traitlets==4.3.3
 urllib3==1.25.10
