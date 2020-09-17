@@ -33,7 +33,7 @@ SECRET_KEY = config['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['cleanbyte.net','85.214.140.221','127.0.0.1']
+ALLOWED_HOSTS = ['www.cleanbyte.net','cleanbyte.net','85.214.140.221','127.0.0.1']
 
 # Application definition
 
