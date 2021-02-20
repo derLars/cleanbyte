@@ -1,0 +1,22 @@
+input[type="file"] {
+	display: none;
+}
+
+.center {
+  	margin: auto;
+
+  	padding: 10px;
+  	text-align: center;
+}
+
+.btn a {
+	color: white;
+}
+
+section #example-image {
+    padding: 0;
+    display: block;
+    margin: 0 auto;
+    max-height: 100%;
+    max-width: 100%;
+}

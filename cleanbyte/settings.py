@@ -14,6 +14,8 @@ from pathlib import Path
 import json
 import os
 
+HOME = '/home/cleanbyte/'
+
 with open('/etc/config.json') as config_file:
     config = json.load(config_file)
 
@@ -30,12 +32,14 @@ SECRET_KEY = config['CLEANBYTE_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cleanbyte.net', 'www.cleanbyte.net','85.214.140.221','127.0.0.1']
+ALLOWED_HOSTS = ['cleanbyte.net', 'www.cleanbyte.net', '85.214.140.221','127.0.0.1']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'base_index.apps.BaseIndexConfig',
+    'background_remover.apps.BackgroundRemoverConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -59,7 +63,7 @@ ROOT_URLCONF = 'cleanbyte.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [(os.path.join(BASE_DIR, 'templates')),],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -122,4 +126,36 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
+STATIC_ROOT = os.path.join(HOME,'static')
+
 STATIC_URL = '/static/'
+
+MEDIA_ROOT = os.path.join(HOME, 'media')
+
+MEDIA_URL = '/media/'
+
+STATICFILES_DIRS = (os.path.join('static'),)
+
+LOGGING = {
+    'version':1,
+    'loggers':{
+        'background_remover':{
+            'handlers':['file'],
+            'level':'DEBUG',
+        },
+    },
+    'handlers':{
+        'file':{
+            'level':'DEBUG',
+            'class':'logging.FileHandler',
+            'filename':'/home/cleanbyte/logs/debug.log',
+            'formatter': 'timestamp',
+        },
+    },
+    'formatters': {
+        'timestamp': {
+            'format': '{asctime}#{ip}#{levelname}#{message}',
+            'style': '{',
+        },
+    },
+}
