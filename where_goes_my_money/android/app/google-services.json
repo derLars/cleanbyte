@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "803822353449",
+    "project_id": "where-goes-my-money",
+    "storage_bucket": "where-goes-my-money.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:803822353449:android:5acd32afca4a26025af038",
+        "android_client_info": {
+          "package_name": "com.example.where_goes_my_money"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "803822353449-d1ll2ivj5372lgg21ej1nf2ppi33vj85.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8WUcAs9-0yduzMwVREr6ZWHcxQjRNQCE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "803822353449-d1ll2ivj5372lgg21ej1nf2ppi33vj85.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

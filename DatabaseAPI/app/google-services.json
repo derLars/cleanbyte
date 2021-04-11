@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1036302648484",
+    "firebase_url": "https://database-api-72262.firebaseio.com",
+    "project_id": "database-api-72262",
+    "storage_bucket": "database-api-72262.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1036302648484:android:34fc2e214d1435fd495231",
+        "android_client_info": {
+          "package_name": "com.derlars.databaseapi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1036302648484-i7urs7a9tml5mdd3t4rv9avanvgedr1m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.derlars.databaseapi",
+            "certificate_hash": "cc970b333d8bb0ee6808dbcb18580a07c45ec042"
+          }
+        },
+        {
+          "client_id": "1036302648484-77rofi3ie3hicv4n2oo4q82mukvibug8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKCou9WWgtEv8qQ0sGyWhh5KcgjS36VPk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1036302648484-77rofi3ie3hicv4n2oo4q82mukvibug8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
