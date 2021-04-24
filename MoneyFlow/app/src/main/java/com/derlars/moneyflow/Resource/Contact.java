@@ -1,36 +1,45 @@
 package com.derlars.moneyflow.Resource;
 
+import android.util.Log;
+
 import com.derlars.moneyflow.Database.Abstracts.BaseCallback;
 
+import com.derlars.moneyflow.Resource.Abstracts.BaseContact;
 import com.derlars.moneyflow.Database.HashMapValue;
 import com.derlars.moneyflow.Database.Value;
 import com.derlars.moneyflow.Resource.Abstracts.BaseResource;
+import com.derlars.moneyflow.Utils.DatabaseTime;
 
-public class Contact<Callback extends BaseCallback> extends BaseResource<Callback> {
-    Value<String> name;
-    Value<String> imageID;
-    HashMapValue<String> purchases;
+public class Contact extends BaseContact {
 
-    private Contact(Callback callback) {
-        super("Contact", callback);
-
-        initialize();
-    }
-
-    public Contact(String key, Callback callback) {
-        super("Contact", key, callback);
-
-        initialize();
+    public Contact(String phone, BaseCallback callback) {
+        super("Contact", phone, callback);
     }
 
     protected void initialize() {
-        name = new Value(this.path,"name",this,true);
-        name.set(this.key);
+        userID = new Value("UID",this.phone,true,false,false,this);
+        userID.setOnline();
 
-        imageID = new Value(this.path,"imageID",this,true);
-        imageID.set("dummy");
+        name = new Value(this.path,"name",true,false,true,null);
+        name.set(this.phone);
 
-        purchases = new HashMapValue(this.path,"purchases",this);
+        imageID = new Value(this.path,"imageID",true,false,true,null);
+        imageID.set("dummy.jpg");
+
+        purchases = new HashMapValue(this.path,"purchases",false,false,true,null);
+    }
+
+    private void initialize(String key) {
+        this.key = key;
+        this.path = this.pathRoot + "/" + this.key;
+
+        name = new Value(this.path,"name",true,false,false,this);
+        name.set(this.phone);
+
+        imageID = new Value(this.path,"imageID",true,false,true,this);
+        imageID.set("dummy.jpg");
+
+        purchases = new HashMapValue(this.path,"purchases",false,true,true,this);
     }
 
     public void setName(String name) {
@@ -38,7 +47,7 @@ public class Contact<Callback extends BaseCallback> extends BaseResource<Callbac
     }
 
     public String getName() {
-        String n = this.name.get();
+        String n = (String)this.name.get();
         if (n == null) {
             n = "";
         }
@@ -51,39 +60,38 @@ public class Contact<Callback extends BaseCallback> extends BaseResource<Callbac
     }
 
     public String getImageID() {
-        String id = this.imageID.get();
+        String id = (String)this.imageID.get();
         if (id == null) {
             id = "";
         }
         return id;
     }
 
+    @Override
     public void setOnline() {
         super.setOnline();
         try {
             name.setOnline();
             imageID.setOnline();
-            purchases.setOnline();
+
         }catch(NullPointerException ex){
 
         }
     }
 
-    public void delete() {
-            name.delete();
-            imageID.delete();
-            purchases.clear();
-    }
-
     @Override
     public void update(String key) {
-        setOnline();
-        notifyUpdate(this.key);
+        if(key.compareTo(this.phone) == 0) {
+            initialize((String)userID.get());
+        }else{
+            setOnline();
+            notifyUpdate(this.key);
+        }
     }
 
     @Override
     public void notOnline(String key) {
-
+        Log.d("UNITTEST","Not online");
     }
 
     @Override
@@ -94,5 +102,10 @@ public class Contact<Callback extends BaseCallback> extends BaseResource<Callbac
             return this.getKey().compareTo(o.getKey());
         }
         return this.name.get().compareTo(c.getName());
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        return 0;
     }
 }

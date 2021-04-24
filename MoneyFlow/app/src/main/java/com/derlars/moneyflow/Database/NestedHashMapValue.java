@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -26,6 +27,8 @@ public class NestedHashMapValue<V> extends BaseValue {
     private Map<String,HashMap<String,V>> collection = new HashMap();
     private boolean collectionModified = true;
 
+    private Map<String,HashMap<String,V>> databaseValue;
+
     private List<String> keyList = new ArrayList();
     private Map<String,List<String>> subKeyLists = new HashMap();
 
@@ -34,14 +37,16 @@ public class NestedHashMapValue<V> extends BaseValue {
     private Queue<Confirmation<V>> toBeConfirmed = new LinkedList<Confirmation<V>>();
     private boolean confirmationEnabled = false;
 
-    public NestedHashMapValue(String path, String key, BaseValueCallback callback) {
-        super(path, key, callback);
+    public NestedHashMapValue(String path, String key, boolean readable, boolean writable, boolean connectOnRequest, BaseValueCallback callback) {
+        super(path, key, readable, writable,connectOnRequest, callback);
     }
 
     public void put(String k1, String k2, V v) {
-        insert(k1,k2,v);
+        if(databaseValue == null || writable) {
+            insert(k1, k2, v);
+        }
 
-        if(online) {
+        if(writable && online && connected) {
             database.setValue(k1,k2,v);
             ConfirmKeys(k1, k2, v);
         }
@@ -124,21 +129,38 @@ public class NestedHashMapValue<V> extends BaseValue {
     private void update() {
         if(online) {
             collectionModified = true;
-            Map<String,HashMap<String,V>> databaseCollection = (Map<String,HashMap<String,V>>)database.getValue();
-            if(databaseCollection != null) {
-                for(String k1 : databaseCollection.keySet()) {
-                    for(String k2 : databaseCollection.get(k1).keySet()) {
-                        insert(k1,k2,databaseCollection.get(k1).get(k2));
+            databaseValue = (Map<String,HashMap<String,V>>)database.getValue();
+            if(databaseValue != null) {
+                for(String k1 : databaseValue.keySet()) {
+                    for(String k2 : databaseValue.get(k1).keySet()) {
+                        insert(k1,k2,databaseValue.get(k1).get(k2));
                     }
                 }
 
-                Set<String> keySet = new HashSet(collection.keySet());
+                Set<String> keySet = new HashSet();
+                boolean success = true;
+                do {
+                    try {
+                        keySet = new HashSet(collection.keySet());
+                    }catch(ConcurrentModificationException ex) {
+                        success = false;
+                    }
+                }while(!success);
 
                 for(String k1 : keySet) {
-                    if(databaseCollection.containsKey(k1)) {
-                        Set<String> subKeySet = new HashSet(collection.get(k1).keySet());
+                    if(databaseValue.containsKey(k1)) {
+                        Set<String> subKeySet = new HashSet();
+                        success = true;
+                        do {
+                            try {
+                                subKeySet = new HashSet(collection.get(k1).keySet());
+                            }catch(ConcurrentModificationException ex) {
+                                success = false;
+                            }
+                        }while(!success);
+
                         for(String k2 : subKeySet) {
-                            if(!databaseCollection.get(k1).containsKey(k2)) {
+                            if(!databaseValue.get(k1).containsKey(k2)) {
                                 remove(k1,k2);
                             }
                         }
@@ -228,37 +250,49 @@ public class NestedHashMapValue<V> extends BaseValue {
 
     @Override
     public void databaseValueRetrieved(String path, String key, DataSnapshot dataSnapshot) {
-        online = true;
+        super.databaseValueRetrieved(path,key,dataSnapshot);
+
         update();
     }
 
     @Override
     public void databaseNoValueRetrieved(String path, String key) {
+        super.databaseNoValueRetrieved(path,key);
+
         notifyNotOnline(key);
     }
 
     @Override
     public void databaseValueDeleted(String path, String key) {
-        online = true;
+        super.databaseValueDeleted(path,key);
+
         update();
     }
 
     @Override
     public void databaseChildAdded(String path, String key, String childKey) {
-        online = true;
+        super.databaseChildAdded(path,key,childKey);
+
         update();
     }
 
     @Override
     public void databaseChildDeleted(String path, String key, String childKey) {
-        online = true;
+        super.databaseChildDeleted(path,key,childKey);
+
         update();
     }
 
     @Override
     public void databaseChildChanged(String path, String key, String childKey) {
-        online = true;
+        super.databaseChildChanged(path,key,childKey);
+
         update();
+    }
+
+    @Override
+    public void update(String key) {
+
     }
 
     @Override
@@ -270,10 +304,5 @@ public class NestedHashMapValue<V> extends BaseValue {
                 + " subKeyLists:" + subKeyLists
                 + " " + super.toString()
                 + "}";
-    }
-
-    @Override
-    public void update(String key) {
-
     }
 }

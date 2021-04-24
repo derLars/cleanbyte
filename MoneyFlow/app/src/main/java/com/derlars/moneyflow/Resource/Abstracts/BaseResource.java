@@ -14,6 +14,9 @@ public abstract class BaseResource<Callback extends BaseCallback> extends Subscr
     protected boolean selected = false;
     protected boolean displayed = false;
 
+    protected boolean readable;
+    protected boolean writable;
+
     public BaseResource(String pathRoot, Callback callback) {
         super(callback);
 

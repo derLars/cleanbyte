@@ -15,33 +15,29 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class ContactsTest extends BaseUnitTest implements BaseCallback {
+
     @Before
     public void before() {
         setFlags("updated");
 
-        UserContactUnderTest preset = new UserContactUnderTest("+00 75 10 00 00",null);
+        authenticate("+33 7 53 00 00 01", "123456");
+
+        UserContactUnderTest preset = new UserContactUnderTest("+33 7 53 00 00 01",null);
         preset.setOnline();
+
+        delay();
+
         preset.delete();
 
-        delay();
-
-        Contacts contacts = Contacts.getInstance(null);
-        contacts.addUserContact("+00 75 00 00 01");
-        contacts.addUserContact("+00 75 00 00 02");
-        contacts.addUserContact("+00 75 00 00 03");
-        contacts.addUserContact("+00 75 00 00 04");
-        contacts.addUserContact("+00 75 00 00 05");
-        contacts = null;
-        Contacts.destroyInstance();
-
-        delay();
+        resetFlags();
     }
 
     @Test
     public void listTest() {
         Contacts contacts = Contacts.getInstance(this);
-        contacts.addUserContact("+00 75 10 00 00");
+        contacts.addUserContact("+33 7 53 00 00 01");
 
+        delay();
         checkFlags(true);
 
         contacts.getUserContact().setName("Lars Larson");
@@ -49,65 +45,45 @@ public class ContactsTest extends BaseUnitTest implements BaseCallback {
 
         checkFlags(true);
 
-        contacts.add("+00 75 00 00 01","name01");
-        contacts.add("+00 75 00 00 02","NOM02");
-        contacts.add("+00 75 00 00 03","NOM03");
-        contacts.add("+00 75 00 00 04","name04");
-        contacts.add("+00 75 00 00 05","name05");
-        contacts.add("+00 75 00 00 11","NOM11");
-        contacts.add("+00 75 00 00 12","NOM12");
-        contacts.add("+00 75 00 00 13","name13");
-        contacts.add("+00 75 00 00 14","name14");
-        contacts.add("+00 75 00 00 15","name15");
+        contacts.add("+33 7 53 00 00 02","NOM02");
+        contacts.add("+33 7 53 00 00 03","NOM03");
+        contacts.add("+33 7 53 00 00 04","name04");
+        contacts.add("+33 7 53 00 00 05","name05");
+        contacts.add("+33 7 53 00 00 11","NOM11");
+        contacts.add("+33 7 53 00 00 12","NOM12");
+        contacts.add("+33 7 53 00 00 13","name13");
+        contacts.add("+33 7 53 00 00 14","name14");
+        contacts.add("+33 7 53 00 00 15","name15");
 
         delay();
 
         List<Contact> all = contacts.getAll(false,"");
-        for(Contact c : all) {
-            Log.d("MUTEX",c.toString());
-        }
-        Log.d("MUTEX","--------");
 
-        assertEquals(5,all.size());
+        assertEquals(4,all.size());
 
         contacts.getAll(true,"");
-        for(Contact c : all) {
-            Log.d("MUTEX",c.toString());
-        }
-        Log.d("MUTEX","--------");
 
-        assertEquals(10,all.size());
+        assertEquals(9,all.size());
 
         contacts.getAll(false,"nom");
-        for(Contact c : all) {
-            Log.d("MUTEX",c.toString());
-        }
-        Log.d("MUTEX","--------");
 
         assertEquals(0,all.size());
 
         contacts.getAll(true,"nom");
-        for(Contact c : all) {
-            Log.d("MUTEX",c.toString());
-        }
-        Log.d("MUTEX","--------");
 
         assertEquals(2,all.size());
 
         contacts.getAll(true,"name");
-        for(Contact c : all) {
-            Log.d("MUTEX",c.toString());
-        }
-        Log.d("MUTEX","--------");
 
-        assertEquals(3,all.size());
+        assertEquals(7,all.size());
     }
 
     @Test
     public void displayedSelectedTest() {
         Contacts contacts = Contacts.getInstance(this);
-        contacts.addUserContact("+00 75 10 00 00");
+        contacts.addUserContact("+33 7 53 00 00 01");
 
+        delay();
         checkFlags(true);
 
         contacts.getUserContact().setName("Lars Larson");
@@ -115,32 +91,32 @@ public class ContactsTest extends BaseUnitTest implements BaseCallback {
 
         checkFlags(true);
 
-        contacts.add("+00 75 00 00 01","name01");
-        contacts.add("+00 75 00 00 02","NOM02");
-        contacts.add("+00 75 00 00 03","NOM03");
-        contacts.add("+00 75 00 00 04","name04");
-        contacts.add("+00 75 00 00 05","name05");
-        contacts.add("+00 75 00 00 11","NOM11");
-        contacts.add("+00 75 00 00 12","NOM12");
-        contacts.add("+00 75 00 00 13","name13");
-        contacts.add("+00 75 00 00 14","name14");
-        contacts.add("+00 75 00 00 15","name15");
+        contacts.add("+33 7 53 00 00 02","NOM02");//Dis name02
+        contacts.add("+33 7 53 00 00 03","NOM03"); //name03
+        contacts.add("+33 7 53 00 00 04","name04");//Dis name04
+        contacts.add("+33 7 53 00 00 05","name05"); //name05
+        contacts.add("+33 7 53 00 00 11","NOM11");//Dis NOM11
+        contacts.add("+33 7 53 00 00 12","NOM12"); //NOM12
+        contacts.add("+33 7 53 00 00 13","name13");//Dis name13
+        contacts.add("+33 7 53 00 00 14","name14"); //name14
+        contacts.add("+33 7 53 00 00 15","name15");//Dis name15
 
         delay();
 
-        List<Contact> all = contacts.getAll(true,"");
-        for(int i=0; i<all.size(); i += 2) {
-            all.get(i).setDisplayed(true);
-        }
+        contacts.get("+33 7 53 00 00 02").setDisplayed(true);
+        contacts.get("+33 7 53 00 00 04").setDisplayed(true);
+        contacts.get("+33 7 53 00 00 11").setDisplayed(true);
+        contacts.get("+33 7 53 00 00 13").setDisplayed(true);
+        contacts.get("+33 7 53 00 00 15").setDisplayed(true);
 
         List<Contact> displayed = contacts.getAllDisplayed(true,"");
         assertEquals(5,displayed.size());
 
         contacts.getAllDisplayed(false,"");
-        assertEquals(3,displayed.size());
+        assertEquals(2,displayed.size());
 
         contacts.getAllDisplayed(true,"name");
-        assertEquals(1,displayed.size());
+        assertEquals(4,displayed.size());
 
         contacts.clearAllDisplayed();
         assertEquals(0,displayed.size());
@@ -150,4 +126,5 @@ public class ContactsTest extends BaseUnitTest implements BaseCallback {
     public void update(String key) {
         raiseFlag("updated");
     }
+
 }

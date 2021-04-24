@@ -12,26 +12,38 @@ public abstract class BaseValue<Callback extends BaseValueCallback> extends Subs
 
     protected final String key;
 
-    protected boolean online;
+    protected boolean online = false;
 
-    protected boolean connected;
+    protected boolean connected = false;
 
-    protected boolean settingOnline;
+    protected boolean settingOnline = false;
 
-    public BaseValue(final String path, final String key, Callback callback) {
+    protected boolean readable;
+    protected boolean writable;
+    protected boolean connectOnRequest;
+
+    public BaseValue(final String path, final String key, boolean readable, boolean writable, boolean connectOnRequest, Callback callback) {
         super(callback);
 
-        this.connected = false;
-        this.settingOnline = false;
-        this.online = false;
         this.path = path;
+
         this.key = key;
 
-        database = new Database(path,key,this);
+        this.readable = readable;
+
+        this.writable = writable;
+
+        this.connectOnRequest = connectOnRequest;
+
+        database = new Database(path,key, readable,writable,connectOnRequest, this);
     }
 
     public void setOnline() {
-        this.settingOnline = true;
+        if(readable) {
+            this.settingOnline = true;
+        }else{
+            this.connected = true;
+        }
         this.online = true;
     }
 

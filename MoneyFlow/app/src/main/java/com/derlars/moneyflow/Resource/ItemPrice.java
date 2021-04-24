@@ -14,15 +14,15 @@ public class ItemPrice<Callback extends BaseCallback> extends BaseResource<Callb
     public ItemPrice(Callback callback) {
         super("ItemPrices", callback);
 
-        price = new Value(this.path,"price",this);
-        contributors = new HashMapValue(this.path,"contributors",this);
+        price = new Value(this.path,"price",true,true,false,this);
+        contributors = new HashMapValue(this.path,"contributors",true,true,false,this);
     }
 
     public ItemPrice(String key, Callback callback) {
         super("ItemPrices",key,callback);
 
-        price = new Value(this.path,"price",this);
-        contributors = new HashMapValue(this.path,"contributors",this);
+        price = new Value(this.path,"price",true,true,false,this);
+        contributors = new HashMapValue(this.path,"contributors",true,true,false,this);
     }
 
     public void setPrice(Double price) {

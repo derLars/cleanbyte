@@ -1,5 +1,7 @@
 package com.derlars.moneyflow.Database;
 
+import android.util.Log;
+
 import com.derlars.moneyflow.Database.Callbacks.BaseValueCallback;
 import com.google.firebase.database.DataSnapshot;
 
@@ -21,6 +23,8 @@ public class HashMapValue<V> extends BaseValue {
     private Map<String, V> collection = new HashMap();
     private boolean collectionModified = true;
 
+    private Map<String, V> databaseValue;
+
     private List<String> keyList = new ArrayList();
 
     private final ScheduledExecutorService confirmator = Executors.newSingleThreadScheduledExecutor();
@@ -28,14 +32,16 @@ public class HashMapValue<V> extends BaseValue {
     private Queue<Confirmation<V>> toBeConfirmed = new LinkedList<Confirmation<V>>();
     private boolean confirmationEnabled = false;
 
-    public HashMapValue(String path, String key, BaseValueCallback callback) {
-        super(path, key, callback);
+    public HashMapValue(String path, String key, boolean readable, boolean writable, boolean connectOnRequest, BaseValueCallback callback) {
+        super(path, key,readable, writable,connectOnRequest, callback);
     }
 
     public void put(String k, V v) {
-        insert(k,v);
+        if(databaseValue == null || writable) {
+            insert(k,v);
+        }
 
-        if(online) {
+        if(writable && online && connected) {
             database.setValue(k,v);
             ConfirmKeys(k,v);
         }
@@ -49,7 +55,7 @@ public class HashMapValue<V> extends BaseValue {
     public void delete(String k) {
         remove(k);
 
-        if(online) {
+        if(writable && online) {
             database.deleteValue(k);
         }
     }
@@ -66,7 +72,7 @@ public class HashMapValue<V> extends BaseValue {
         collection.clear();
         collectionModified = true;
 
-        if(online) {
+        if(writable && online) {
             database.deleteValue();
         }
     }
@@ -84,13 +90,13 @@ public class HashMapValue<V> extends BaseValue {
         return keyList;
     }
 
-    private void update() {
-        if(online) {
+    protected void updateValue() {
+        if(readable && online) {
             collectionModified = true;
-            Map<String,V> databaseCollection = (Map<String,V>)database.getValue();
-            if(databaseCollection != null) {
-                for(String k : databaseCollection.keySet()) {
-                    insert(k,databaseCollection.get(k));
+            databaseValue = (Map<String,V>)database.getValue();
+            if(databaseValue != null) {
+                for(String k : databaseValue.keySet()) {
+                    insert(k,databaseValue.get(k));
                 }
 
                 boolean success = true;
@@ -99,7 +105,7 @@ public class HashMapValue<V> extends BaseValue {
                         Set<String> keySet = new HashSet(collection.keySet());
 
                         for(String k : keySet) {
-                            if(!databaseCollection.containsKey(k)) {
+                            if(!databaseValue.containsKey(k)) {
                                 remove(k);
                             }
                         }
@@ -166,17 +172,11 @@ public class HashMapValue<V> extends BaseValue {
 
             confirmator.schedule(ru, 950, TimeUnit.MILLISECONDS);
         }
-
-
-
-        System.out.println("start singleThreadScheduledExecutor at " + System.currentTimeMillis());
-
-        //ses.shutdown();// shutDown auch bei singleshot notwendig
     }
 
     @Override
     public void setOnline() {
-        if(!online) {
+        if(writable && !online) {
             super.setOnline();
             database.setValue(collection);
         }
@@ -184,37 +184,46 @@ public class HashMapValue<V> extends BaseValue {
 
     @Override
     public void databaseValueRetrieved(String path, String key, DataSnapshot dataSnapshot) {
-        online = true;
-        update();
+        super.databaseValueRetrieved(path,key,dataSnapshot);
+
+        updateValue();
     }
 
     @Override
     public void databaseNoValueRetrieved(String path, String key) {
+        super.databaseNoValueRetrieved(path,key);
+
         notifyNotOnline(key);
     }
 
     @Override
     public void databaseValueDeleted(String path, String key) {
-        online = true;
-        update();
+        super.databaseValueDeleted(path,key);
+
+        updateValue();
     }
 
     @Override
     public void databaseChildAdded(String path, String key, String childKey) {
-        online = true;
-        update();
+        super.databaseChildAdded(path,key,childKey);
+        updateValue();
     }
 
     @Override
     public void databaseChildDeleted(String path, String key, String childKey) {
-        online = true;
-        update();
+        super.databaseChildDeleted(path,key,childKey);
+        updateValue();
     }
 
     @Override
     public void databaseChildChanged(String path, String key, String childKey) {
-        online = true;
-        update();
+        super.databaseChildChanged(path,key,childKey);
+        updateValue();
+    }
+
+    @Override
+    public void update(String key) {
+        Log.d("TEST","test");
     }
 
     @Override
@@ -225,10 +234,5 @@ public class HashMapValue<V> extends BaseValue {
                 + " keyList:" + keyList
                 + " " + super.toString()
                 + "}";
-    }
-
-    @Override
-    public void update(String key) {
-
     }
 }
