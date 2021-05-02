@@ -12,7 +12,7 @@ public class ItemPrice<Callback extends BaseCallback> extends BaseResource<Callb
     HashMapValue<Double> contributors;
 
     public ItemPrice(Callback callback) {
-        super("ItemPrices", callback);
+        super("ItemPrice", callback);
 
         price = new Value(this.path,"price",true,true,false,this);
         contributors = new HashMapValue(this.path,"contributors",true,true,false,this);

@@ -3,6 +3,9 @@ package com.derlars.moneyflow;
 import androidx.test.rule.ActivityTestRule;
 
 import com.derlars.moneyflow.Authentication.Authentication;
+import com.derlars.moneyflow.Database.Database;
+import com.derlars.moneyflow.Resource.Contact;
+import com.derlars.moneyflow.Resource.UserContact;
 
 import org.junit.Rule;
 
@@ -24,17 +27,58 @@ public class BaseUnitTest implements Authentication.Callback  {
 
     protected final static int DELAY = 1000;
 
+    protected void setUp(String... flags) {
+        setFlags(flags);
+
+        Database.SET_TEST_MODE();
+
+        authenticate("+33 7 53 00 00 02","123456");
+
+        Database db = new Database("","",false,true,true,null);
+        db.deleteValue();
+
+        delay();
+
+        UserContact contact1 = new UserContact("+33 7 53 00 00 02",null);
+        delay(DELAY/4);
+        contact1.setName("onlineName2");
+        delay(DELAY/4);
+        contact1.free();
+
+        authenticate("+33 7 53 00 00 03","123456");
+        UserContact contact2 = new UserContact("+33 7 53 00 00 03",null);
+        delay(DELAY/4);
+        contact2.setName("onlineName3");
+        delay(DELAY/4);
+        contact2.free();
+
+        authenticate("+33 7 53 00 00 04","123456");
+        UserContact contact3 = new UserContact("+33 7 53 00 00 04",null);
+        delay(DELAY/4);
+        contact3.setName("onlineName4");
+        delay(DELAY/4);
+        contact3.free();
+
+        authenticate("+33 7 53 00 00 01","123456");
+
+        UserContact userContact = new UserContact("+33 7 53 00 00 01",null);
+        delay(DELAY/4);
+        userContact.setName("onlineName1");
+        delay(DELAY/4);
+        contact3.free();
+    }
+
     protected void authenticate(String phone, String code) {
         auth = Authentication.getInstance(rule.getActivity(),this);
         auth.signOut();
         delay();
 
         auth.startAuthentication();
-        waitFor(2000);
+        delay(1900);
         auth.authenticate(phone);
-        waitFor(2000);
+        delay(1900);
         auth.confirm(code);
-        waitFor(2000);
+        delay(1900);
 
         assertTrue(authenticated);
     }
@@ -48,7 +92,7 @@ public class BaseUnitTest implements Authentication.Callback  {
     }
 
     protected void checkFlags(Boolean... expectedStatus) {
-        waitFor(DELAY);
+        delay(DELAY);
 
         for(int i=0; i<expectedStatus.length; i++) {
             assertEquals(flags[i],expectedStatus[i],flagStatus.get(i));
@@ -73,7 +117,7 @@ public class BaseUnitTest implements Authentication.Callback  {
         }
     }
 
-    protected void waitFor(long ms) {
+    protected void delay(long ms) {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
@@ -82,7 +126,7 @@ public class BaseUnitTest implements Authentication.Callback  {
     }
 
     protected void delay() {
-        waitFor(DELAY);
+        delay(DELAY);
     }
 
     @Override

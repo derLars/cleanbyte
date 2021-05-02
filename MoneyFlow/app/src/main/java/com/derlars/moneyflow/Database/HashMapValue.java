@@ -1,7 +1,5 @@
 package com.derlars.moneyflow.Database;
 
-import android.util.Log;
-
 import com.derlars.moneyflow.Database.Callbacks.BaseValueCallback;
 import com.google.firebase.database.DataSnapshot;
 
@@ -37,13 +35,13 @@ public class HashMapValue<V> extends BaseValue {
     }
 
     public void put(String k, V v) {
-        if(databaseValue == null || writable) {
-            insert(k,v);
-        }
+        if(writable) {
+            insert(k, v);
 
-        if(writable && online && connected) {
-            database.setValue(k,v);
-            ConfirmKeys(k,v);
+            if(isOnline()) {
+                database.setValue(k,v);
+                confirmKeys(k,v);
+            }
         }
     }
 
@@ -53,10 +51,12 @@ public class HashMapValue<V> extends BaseValue {
     }
 
     public void delete(String k) {
-        remove(k);
+        if(writable) {
+            remove(k);
 
-        if(writable && online) {
-            database.deleteValue(k);
+            if(isOnline()) {
+                database.deleteValue(k);
+            }
         }
     }
 
@@ -69,15 +69,21 @@ public class HashMapValue<V> extends BaseValue {
     }
 
     public void clear() {
-        collection.clear();
-        collectionModified = true;
+        if(writable) {
+            collection.clear();
+            collectionModified = true;
 
-        if(writable && online) {
-            database.deleteValue();
+            if(isOnline()) {
+                database.deleteValue();
+            }
         }
     }
 
     public V get(String k) {
+        if(readable && isOnline()) {
+            database.getValue();
+        }
+
         if(collection.containsKey(k)) {
             return collection.get(k);
         }
@@ -85,42 +91,69 @@ public class HashMapValue<V> extends BaseValue {
     }
 
     public List<String> getKeyList() {
+        if(readable && isOnline()) {
+            database.getValue();
+        }
+
         sort();
 
         return keyList;
     }
 
-    protected void updateValue() {
-        if(readable && online) {
+    private Set<String> getKeySet() {
+        while(true) {
+            try {
+                Set<String> keySet = new HashSet(collection.keySet());
+
+                return keySet;
+            }catch(ConcurrentModificationException ex) {
+
+            }
+        }
+    }
+
+    private Map<String,V> getCollection() {
+        Map<String, V> collectionMap;
+
+        while(true) {
+            collectionMap = new HashMap();
+
+            try {
+                Set<String> keySet = getKeySet();
+                for(String k1 : keySet) {
+                    collectionMap.put(k1,collection.get(k1));
+                }
+
+                return collectionMap;
+            }catch(ConcurrentModificationException ex) {
+
+            }
+        }
+    }
+
+    protected void updateCollection() {
+        if(readable && isOnline()) {
             collectionModified = true;
+
             databaseValue = (Map<String,V>)database.getValue();
+
             if(databaseValue != null) {
                 for(String k : databaseValue.keySet()) {
                     insert(k,databaseValue.get(k));
                 }
-
-                boolean success = true;
-                do {
-                    try {
-                        Set<String> keySet = new HashSet(collection.keySet());
-
-                        for(String k : keySet) {
-                            if(!databaseValue.containsKey(k)) {
-                                remove(k);
-                            }
-                        }
-
-                        success = true;
-                    }catch(ConcurrentModificationException ex) {
-                        success = false;
-                    }
-                }while(!success);
-
-                sort();
-
-                notifyUpdate(key);
             }
 
+            Set<String> keySet = getKeySet();
+
+            for(String k : keySet) {
+                if(!databaseValue.containsKey(k)) {
+                    remove(k);
+                }
+            }
+
+            sort();
+
+            notifyUpdate(key);
         }
     }
 
@@ -129,23 +162,17 @@ public class HashMapValue<V> extends BaseValue {
             collectionModified = false;
             keyList.clear();
 
-            boolean success = true;
-            do {
-                try {
-                    Set<String> s = new HashSet(collection.keySet());
-                    for(String k : s) {
-                        keyList.add(k);
-                    }
-                }catch(ConcurrentModificationException ex) {
-                    success = false;
-                }
-            }while(!success);
+            Set<String> keySet = getKeySet();
+
+            for(String k : keySet) {
+                keyList.add(k);
+            }
 
             Collections.sort(keyList);
         }
     }
 
-    private void ConfirmKeys(String k, V v) {
+    private void confirmKeys(String k, V v) {
         Runnable ru = () -> {
             if(!toBeConfirmed.isEmpty()) {
                 Confirmation c = toBeConfirmed.remove();
@@ -165,7 +192,8 @@ public class HashMapValue<V> extends BaseValue {
                 }
             }
         };
-        toBeConfirmed.add(new Confirmation<V>(System.currentTimeMillis()+ 950, k,v,ru));
+
+        toBeConfirmed.add(new Confirmation(System.currentTimeMillis()+ 950, k,v,ru));
 
         if(!confirmationEnabled) {
             confirmationEnabled = true;
@@ -175,22 +203,25 @@ public class HashMapValue<V> extends BaseValue {
     }
 
     @Override
-    public void setOnline() {
-        if(writable && !online) {
-            super.setOnline();
-            database.setValue(collection);
-        }
-    }
-
-    @Override
     public void databaseValueRetrieved(String path, String key, DataSnapshot dataSnapshot) {
         super.databaseValueRetrieved(path,key,dataSnapshot);
 
-        updateValue();
+        updateCollection();
     }
 
     @Override
     public void databaseNoValueRetrieved(String path, String key) {
+        if(writable && isConnecting() && collection.size() > 0) {
+            Map<String,V> collectionMap =getCollection();
+
+            for(String k1 : collectionMap.keySet()) {
+                database.setValue(k1,collectionMap.get(k1));
+            }
+        }else{
+            super.databaseNoValueRetrieved(path,key);
+        }
+
+
         super.databaseNoValueRetrieved(path,key);
 
         notifyNotOnline(key);
@@ -200,30 +231,22 @@ public class HashMapValue<V> extends BaseValue {
     public void databaseValueDeleted(String path, String key) {
         super.databaseValueDeleted(path,key);
 
-        updateValue();
+        updateCollection();
     }
 
     @Override
     public void databaseChildAdded(String path, String key, String childKey) {
-        super.databaseChildAdded(path,key,childKey);
-        updateValue();
+        updateCollection();
     }
 
     @Override
     public void databaseChildDeleted(String path, String key, String childKey) {
-        super.databaseChildDeleted(path,key,childKey);
-        updateValue();
+        updateCollection();
     }
 
     @Override
     public void databaseChildChanged(String path, String key, String childKey) {
-        super.databaseChildChanged(path,key,childKey);
-        updateValue();
-    }
-
-    @Override
-    public void update(String key) {
-        Log.d("TEST","test");
+        updateCollection();
     }
 
     @Override

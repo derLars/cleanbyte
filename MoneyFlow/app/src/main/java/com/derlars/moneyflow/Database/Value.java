@@ -3,6 +3,7 @@ package com.derlars.moneyflow.Database;
 import android.util.Log;
 
 import com.derlars.moneyflow.Database.Callbacks.BaseValueCallback;
+import com.derlars.moneyflow.Database.Enums.DatabaseStatus;
 import com.google.firebase.database.DataSnapshot;
 
 public class Value<V extends Comparable> extends BaseValue {
@@ -14,12 +15,11 @@ public class Value<V extends Comparable> extends BaseValue {
     }
 
     public void set(V v) {
-        if(databaseValue == null || writable) {
-            //Log.d("UNITTEST","Setting value for " + this.getClass().getName() + " -> " + this.path + "/" + this.key + ": " + v);
+        if(writable || !isOnline()) {
             value = v;
         }
 
-        if(writable && online && connected && (databaseValue == null || value.compareTo(databaseValue) != 0)){
+        if(writable && isOnline() && (databaseValue == null || value.compareTo(databaseValue) != 0) ) {
             database.setValue(v);
         }
     }
@@ -27,28 +27,28 @@ public class Value<V extends Comparable> extends BaseValue {
     public V get() {
         database.getValue();
 
-        //Log.d("UNITTEST","Getting value for " + this.getClass().getName() + " -> " + this.path + "/" + this.key + ": " + value);
         return value;
     }
 
     public void delete() {
-        value = null;
+        if(writable) {
+            value = null;
+            databaseValue = null;
 
-        if(writable && online) {
-            database.deleteValue();
+            if(isOnline()) {
+                database.deleteValue();
+            }
         }
     }
 
     private void updateValue() {
-        if(readable && online) {
-            V tmp = (V)database.getValue();
+        if(readable) {
+            V dbValue = (V)database.getValue();
 
-            //Log.d("UNITTEST","Updating value for " + this.getClass().getName() + " -> " + this.path + "/" + this.key + ": " + value);
-
-            if(tmp != null && (databaseValue == null || tmp.compareTo(databaseValue) != 0)) {
-                value = tmp;
+            if(dbValue != null && (databaseValue == null || dbValue.compareTo(databaseValue) != 0)) {
+                value = dbValue;
                 notifyUpdate(key);
-            }else if(tmp == null) {
+            }else if(dbValue == null) {
                 notifyNotOnline(key);
             }
         }
@@ -57,33 +57,20 @@ public class Value<V extends Comparable> extends BaseValue {
     }
 
     @Override
-    public void setOnline() {
-        if(!online) {
-            super.setOnline();
-
-            if(writable && isConnected()) {
-                database.setValue(value);
-            }
-        }
-    }
-
-    @Override
     public void databaseValueRetrieved(String path, String key, DataSnapshot dataSnapshot) {
         super.databaseValueRetrieved(path, key, dataSnapshot);
 
-        settingOnline = false;
         updateValue();
     }
 
     @Override
     public void databaseNoValueRetrieved(String path, String key) {
-        super.databaseNoValueRetrieved(path, key);
-
-        if(settingOnline && value != null) {
+        if(writable && isConnecting() && value != null){
             database.setValue(value);
+        }else{
+            super.databaseNoValueRetrieved(path, key);
         }
 
-        settingOnline = false;
         notifyNotOnline(key);
     }
 
@@ -94,9 +81,4 @@ public class Value<V extends Comparable> extends BaseValue {
         updateValue();
     }
 
-    @Override
-    public void update(String key) {
-        setOnline();
-        notifyUpdate(this.key);
-    }
 }

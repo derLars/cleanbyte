@@ -81,20 +81,16 @@ public class BaseContainer<T extends BaseResource> extends Subscriptable<BaseCal
         return displayed;
     }
 
-    private Set<String> getKeySet() {
-        Set<String> keySet = new HashSet();
-
-        boolean success = true;
-        do {
+    protected Set<String> getKeySet() {
+        while(true) {
             try {
-                keySet = new HashSet(this.collection.keySet());
-                success = true;
-            } catch (ConcurrentModificationException ex) {
-                success = false;
-            }
-        }while(!success);
+                Set<String> keySet = new HashSet(collection.keySet());
 
-        return keySet;
+                return keySet;
+            }catch(ConcurrentModificationException ex) {
+
+            }
+        }
     }
 
     public void clearAllSelected() {
@@ -158,6 +154,18 @@ public class BaseContainer<T extends BaseResource> extends Subscriptable<BaseCal
                 }
             }
         }
+    }
+
+    protected void concurrentUpdate(Runnable fun) {
+        boolean success;
+        do {
+            try {
+                fun.run();
+                success = true;
+            } catch (ConcurrentModificationException ex) {
+                success = false;
+            }
+        }while(!success);
     }
 
     @Override

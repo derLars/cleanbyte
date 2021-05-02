@@ -1,5 +1,6 @@
 package com.derlars.moneyflow;
 
+import com.derlars.moneyflow.Resource.Abstracts.BaseContact;
 import com.derlars.moneyflow.Resource.Contact;
 import com.derlars.moneyflow.Resource.Item;
 
@@ -16,11 +17,11 @@ public class ItemPreparation {
 
     public List<String> classification;
 
-    public List<Contact> contacts;
+    //public List<Contact> contacts;
 
-    public Map<Contact,Double> ratios;
+    public Map<BaseContact,Double> ratios;
 
-    public ItemPreparation(String name, double price, List<String> classification, List<Contact> contacts, Map<Contact,Double> ratios) {
+    public ItemPreparation(String name, double price, List<String> classification, Map<BaseContact,Double> ratios) {
         this.key = System.currentTimeMillis() + name;
 
         this.name = name;
@@ -28,7 +29,7 @@ public class ItemPreparation {
 
         this.classification = classification;
 
-        this.contacts = contacts;
+        //this.contacts = contacts;
 
         this.ratios = ratios;
     }

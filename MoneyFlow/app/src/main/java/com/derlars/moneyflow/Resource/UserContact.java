@@ -4,11 +4,17 @@ import android.provider.ContactsContract;
 import android.util.Log;
 
 import com.derlars.moneyflow.Authentication.Authentication;
+import com.derlars.moneyflow.Container.Purchases;
 import com.derlars.moneyflow.Database.Abstracts.BaseCallback;
 import com.derlars.moneyflow.Database.HashMapValue;
 import com.derlars.moneyflow.Database.Value;
 import com.derlars.moneyflow.Resource.Abstracts.BaseContact;
 import com.derlars.moneyflow.Utils.DatabaseTime;
+
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class UserContact extends BaseContact implements DatabaseTime.Callback{
     protected Value<Long> premium;
@@ -24,21 +30,58 @@ public class UserContact extends BaseContact implements DatabaseTime.Callback{
         databaseTime = DatabaseTime.getInstance(this);
     }
 
+    public void free() {
+        if(this.premium != null) {
+            this.premium.unsubscribe(this);
+            this.premium = null;
+        }
+        if(this.userID != null) {
+            this.userID.unsubscribe(this);
+            this.userID = null;
+        }
+
+        if(this.name != null) {
+            this.name.unsubscribe(this);
+            this.name = null;
+        }
+
+        if(this.imageID != null) {
+            this.imageID.unsubscribe(this);
+            this.imageID = null;
+        }
+
+        if(this.purchases != null) {
+            this.purchases.unsubscribe(this);
+            this.purchases = null;
+        }
+
+        if(this.databaseTime != null) {
+            this.databaseTime.unsubscribe(this);
+            this.databaseTime = null;
+        }
+    }
+
     @Override
     protected void initialize() {
         premium = new Value(this.path,"premium",true,true,false,this);
 
         userID = new Value("UID",this.phone,false,true,true,null);
-        userID.setOnline();
-        userID.set(key);
 
         name = new Value(this.path,"name",true,true,false,this);
-        name.set(this.phone);
 
         imageID = new Value(this.path,"imageID",true,true,false,this);
-        imageID.set("dummy.jpg");
 
         purchases = new HashMapValue(this.path,"purchases",true,true,false,this);
+
+        premium.setOnline();
+        userID.setOnline();
+        name.setOnline();
+        imageID.setOnline();
+        purchases.setOnline();
+
+        userID.set(key);
+
+        imageID.set("dummy.jpg");
     }
 
     public void setName(String name) {
@@ -52,6 +95,10 @@ public class UserContact extends BaseContact implements DatabaseTime.Callback{
     public boolean isPremium() {
         lastTimestamp = databaseTime.getLastTime();
         return lastTimestamp > 0 && isOnline() && premium.get() != null && premium.get() > lastTimestamp;
+    }
+
+    public List<String> getPurchases() {
+        return purchases.getKeyList();
     }
 
     @Override
@@ -73,6 +120,10 @@ public class UserContact extends BaseContact implements DatabaseTime.Callback{
 
     @Override
     public void notOnline(String key) {
+        if(this.name != null && key.compareTo(this.name.getKey()) == 0) {
+            name.set(this.phone);
+        }
+
         if(databaseTime == null) {
             databaseTime = DatabaseTime.getInstance(this);
         }
@@ -90,8 +141,32 @@ public class UserContact extends BaseContact implements DatabaseTime.Callback{
         this.lastTimestamp = time;
     }
 
+    protected void concurrentUpdate(Runnable fun) {
+        boolean success;
+        do {
+            try {
+                fun.run();
+                success = true;
+            } catch (ConcurrentModificationException ex) {
+                success = false;
+            }
+        }while(!success);
+    }
+
     @Override
     public void update(String key) {
+        if(this.purchases != null && key.compareTo(this.purchases.getKey()) == 0) {
+            concurrentUpdate(() -> {
+                Purchases purchases = Purchases.getInstance();
+                if(purchases != null) {
+                    List<String> keyList = this.purchases.getKeyList();
+                    for (String k : keyList) {
+                        purchases.add(k);
+                    }
+                }
+            });
+        }
+
         this.setOnline();
         online = true;
 

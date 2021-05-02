@@ -1,7 +1,5 @@
 package com.derlars.moneyflow.Database;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -22,6 +20,8 @@ public class Database<Callback extends DatabaseCallback> extends SubscriptableDa
     private Authentication auth;
 
     private FirebaseDatabase db = FirebaseDatabase.getInstance();
+    private static boolean persistanceEnabled = false;
+
     private DatabaseReference ref;
 
     public final String path;
@@ -38,6 +38,9 @@ public class Database<Callback extends DatabaseCallback> extends SubscriptableDa
     private boolean writable;
     private boolean connectOnRequest;
 
+    private static final String UNIT_TEST_PATH = "UnitTest/";
+    private static boolean TEST_MODE = false;
+
     public Database(final String path, final String key, boolean readable, boolean writable, boolean connectOnRequest, final Callback callback) {
         super(callback);
 
@@ -50,49 +53,72 @@ public class Database<Callback extends DatabaseCallback> extends SubscriptableDa
         this.writable = writable;
         this.connectOnRequest = connectOnRequest;
 
-        ref = db.getReference(this.path);
+        if(!persistanceEnabled) {
+            persistanceEnabled = true;
+            //this.db.setPersistenceEnabled(true);
+        }
+
+        if(TEST_MODE) {
+            ref = db.getReference(UNIT_TEST_PATH + this.path);
+        }else{
+            ref = db.getReference(this.path);
+        }
 
         if(!connectOnRequest) {
             connect();
         }
     }
 
+    public static void SET_TEST_MODE() {
+        TEST_MODE = true;
+    }
+
     private void connect() {
         if(auth.isSignedIn() && !connected && readable) {
-            Log.d("UNITTEST","Setting online: " + this.key);
+            //ref.child(this.key).keepSynced(true);
+
             ref.child(this.key).addChildEventListener(new ChildEventListener() {
 
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                     if (isSnapshotValid(snapshot)) {
-                        notifyChildAdded(path, key, getSnapshotKey(snapshot));
+                        //The dataSnapshot is the child and not the general object
+                        //dataSnapshot = snapshot;
+
+                        //notifyChildAdded(path, key, getSnapshotKey(snapshot));
                     }
                 }
 
                 @Override
                 public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                     if (isSnapshotValid(snapshot)) {
-                        notifyChildChanged(path, key, getSnapshotKey(snapshot));
+                        //dataSnapshot = snapshot;
+
+                        //notifyChildChanged(path, key, getSnapshotKey(snapshot));
                     }
                 }
 
                 @Override
                 public void onChildRemoved(@NonNull DataSnapshot snapshot) {
                     if (isSnapshotValid(snapshot)) {
-                        notifyChildDeleted(path, key, getSnapshotKey(snapshot));
+                        //dataSnapshot = snapshot;
+
+                        //notifyChildDeleted(path, key, getSnapshotKey(snapshot));
                     }
                 }
 
                 @Override
                 public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                     if (isSnapshotValid(snapshot)) {
-                        notifyChildDeleted(path, key, getSnapshotKey(snapshot));
+                        //dataSnapshot = snapshot;
+
+                        //notifyChildDeleted(path, key, getSnapshotKey(snapshot));
                     }
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    Log.d("TEST","Test");
+
                 }
             });
 
@@ -100,20 +126,16 @@ public class Database<Callback extends DatabaseCallback> extends SubscriptableDa
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     dataSnapshot = snapshot;
-                    Log.d("UNITTEST","Receiving snapshot: " + snapshot);
 
                     if(isSnapshotValid(snapshot)) {
-                        Log.d("UNITTEST","Which is valid.");
                         notifyValueRetrieved(path,key,dataSnapshot);
                     }else{
-                        Log.d("UNITTEST","Which is NOT valid.");
                         notifyNoValueRetrieved(path,key);
                     }
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    Log.d("UNITTEST","CANCELLED SNAPSHOT");
                     notifyNoValueRetrieved(path, key);
                 }
             });

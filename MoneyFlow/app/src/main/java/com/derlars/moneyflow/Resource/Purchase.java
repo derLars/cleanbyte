@@ -1,9 +1,13 @@
 package com.derlars.moneyflow.Resource;
 
+import android.util.Log;
+
 import com.derlars.moneyflow.Database.Abstracts.BaseCallback;
 import com.derlars.moneyflow.Database.HashMapValue;
 import com.derlars.moneyflow.Database.Value;
 import com.derlars.moneyflow.Resource.Abstracts.BaseResource;
+
+import java.util.List;
 
 public class Purchase<Callback extends BaseCallback> extends BaseResource<Callback> {
     Value<String> name;
@@ -24,9 +28,13 @@ public class Purchase<Callback extends BaseCallback> extends BaseResource<Callba
 
     protected void initialize() {
         name = new Value(this.path,"name",true,true,false,this);
-        name.set(this.key);
 
         itemKeys = new HashMapValue(this.path,"itemKeys",true,true,false,this);
+
+        name.setOnline();
+        itemKeys.setOnline();
+
+        name.set(this.key);
     }
 
     public void setName(String name) {
@@ -46,14 +54,20 @@ public class Purchase<Callback extends BaseCallback> extends BaseResource<Callba
         itemKeys.put(itemKey,"1");
     }
 
+    public List<String> getItemKeyList() {
+        return itemKeys.getKeyList();
+    }
+
     public void setOnline() {
-        super.setOnline();
-        try {
-            name.setOnline();
-            itemKeys.setOnline();
+        if(!isOnline()) {
+            super.setOnline();
+            try {
+                name.setOnline();
+                itemKeys.setOnline();
 
-        }catch(NullPointerException ex){
+            }catch(NullPointerException ex){
 
+            }
         }
     }
 
@@ -69,7 +83,7 @@ public class Purchase<Callback extends BaseCallback> extends BaseResource<Callba
 
     @Override
     public void update(String key) {
-
+        this.online = true;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.derlars.moneyflow;
 
+import com.derlars.moneyflow.Resource.Abstracts.BaseContact;
 import com.derlars.moneyflow.Resource.Contact;
 import com.derlars.moneyflow.Resource.Item;
 import com.derlars.moneyflow.Resource.ItemPrice;
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PurchaseGenerator {
+public class PurchaseAssistant {
     private Map<String,ItemPreparation> itemPreparations = new HashMap();
     private List<ItemPreparation> all = new ArrayList();
 
@@ -29,9 +30,11 @@ public class PurchaseGenerator {
         return all;
     }
 
-    public void publish() {
-        Map<Contact, Purchase> purchases = new HashMap();
+    public void publish(String name, long timestamp) {
+        Map<BaseContact, Purchase> purchases = new HashMap();
+
         List<Item> items = new ArrayList();
+
         List<ItemPrice> itemPrices = new ArrayList();
 
         for(String key : itemPreparations.keySet()) {
@@ -40,20 +43,25 @@ public class PurchaseGenerator {
 
             itemPrice.setPrice(itemPreparations.get(key).price);
 
-            for(Contact c : itemPreparations.get(key).contacts) {
-                itemPrice.addContributor(c.getKey(),itemPreparations.get(key).ratios.get(c));
+            for(BaseContact c : itemPreparations.get(key).ratios.keySet()) {
+                itemPrice.addContributor(c.getPhone(),itemPreparations.get(key).ratios.get(c));
 
-                if(!purchases.containsKey(c)) {
-                    purchases.put(c,new Purchase(null));
+                if(c.isOnline()) {
+                    if(!purchases.containsKey(c)) {
+                        purchases.put(c,new Purchase(null));
+                        purchases.get(c).setName(name);
+                    }
+                    Item item = new Item(null);
+                    items.add(item);
+
+                    item.setItemPriceKey(itemPrice.getKey());
+                    item.setTitle(itemPreparations.get(key).name);
+                    item.setTimestamp(timestamp);
+
+                    item.setClassification(itemPreparations.get(key).classification);
+
+                    purchases.get(c).addItemKey(item.getKey());
                 }
-                Item item = new Item(null);
-                items.add(item);
-
-                item.setItemPriceKey(itemPrice.getKey());
-                item.setTitle(itemPreparations.get(key).name);
-                item.setClassification(itemPreparations.get(key).classification);
-
-                purchases.get(c).addItemKey(item.getKey());
             }
         }
 
@@ -65,9 +73,8 @@ public class PurchaseGenerator {
             item.setOnline();
         }
 
-        for(Contact c : purchases.keySet()) {
-            //c.
-
+        for(BaseContact c : purchases.keySet()) {
+            c.addPurchase(purchases.get(c),timestamp);
         }
     }
 }

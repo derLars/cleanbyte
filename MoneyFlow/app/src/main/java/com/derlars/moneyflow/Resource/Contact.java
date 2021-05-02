@@ -21,12 +21,19 @@ public class Contact extends BaseContact {
         userID.setOnline();
 
         name = new Value(this.path,"name",true,false,true,null);
-        name.set(this.phone);
 
         imageID = new Value(this.path,"imageID",true,false,true,null);
-        imageID.set("dummy.jpg");
 
         purchases = new HashMapValue(this.path,"purchases",false,false,true,null);
+
+        userID.setOnline();
+        name.setOnline();
+        imageID.setOnline();
+        purchases.setOnline();
+
+        name.set(this.phone);
+
+        imageID.set("dummy.jpg");
     }
 
     private void initialize(String key) {
@@ -84,9 +91,9 @@ public class Contact extends BaseContact {
         if(key.compareTo(this.phone) == 0) {
             initialize((String)userID.get());
         }else{
-            setOnline();
             notifyUpdate(this.key);
         }
+        setOnline();
     }
 
     @Override

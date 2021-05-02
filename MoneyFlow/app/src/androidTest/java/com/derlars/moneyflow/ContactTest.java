@@ -1,11 +1,10 @@
 package com.derlars.moneyflow;
 
-import android.util.Log;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.derlars.moneyflow.Authentication.Authentication;
+import com.derlars.moneyflow.Container.Contacts;
 import com.derlars.moneyflow.Database.Abstracts.BaseCallback;
+
 import com.derlars.moneyflow.Resource.Contact;
 import com.derlars.moneyflow.Resource.UserContact;
 import com.derlars.moneyflow.TestClasses.UserContactUnderTest;
@@ -14,6 +13,8 @@ import com.derlars.moneyflow.Utils.DatabaseTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -24,138 +25,145 @@ public class ContactTest extends BaseUnitTest implements BaseCallback {
 
     @Before
     public void before() {
-        setFlags("updated");
-
-        auth = Authentication.getInstance(rule.getActivity(),this);
-        auth.signOut();
-        waitFor(2000);
-        /*
-        for(int i=2; i<9; i++) {
-            auth.startAuthentication();
-            waitFor(1200);
-            auth.authenticate("+33 7 53 00 00 0"+i);
-            waitFor(1200);
-            auth.confirm("123456");
-            waitFor(1200);
-            assertTrue(authenticated);
-            UserContact userContact = new UserContact("+33 7 53 00 00 0"+i, null);
-            userContact.setOnline();
-            delay();
-            auth.signOut();
-            delay();
-        }
-         */
-
-        auth.startAuthentication();
-        waitFor(2700);
-        auth.authenticate("+33 7 53 00 00 01");
-        waitFor(2700);
-        auth.confirm("123456");
-        waitFor(2700);
-        assertTrue(authenticated);
-
-        UserContactUnderTest preset = new UserContactUnderTest("+33 7 53 00 00 01",null);
-        preset.setOnline();
-
-        delay();
-
-        preset.delete();
-
-        delay();
-
-        resetFlags();
+        setUp("updated");
     }
 
     @Test
     public void userContactTest() {
         DatabaseTime databaseTime = DatabaseTime.getInstance();
-        waitFor(1000);
         long currentTimestamp = databaseTime.getLastTime();
 
-        UserContact userContact = new UserContact("+33 7 53 00 00 01", this);
-
-        UserContactUnderTest userContactUnderTest = new UserContactUnderTest("+33 7 53 00 00 01",null);
-
-        userContact.setOnline();
+        UserContactUnderTest userContact = new UserContactUnderTest("+33 7 53 00 00 01", this);
 
         delay();
-        long premium = userContactUnderTest.getPremium();
 
-        assertTrue("Premium: " + premium + " | lower border: " + (long)(currentTimestamp + THREE_MONTH),premium >= (currentTimestamp + THREE_MONTH));
-        assertTrue("Premium: " + premium + " | upper border: " + (long)(currentTimestamp + THREE_MONTH +3000),premium < currentTimestamp + THREE_MONTH +3000);
+        assertTrue(userContact.isOnline());
+        long premium = userContact.getPremium();
+        boolean isPremium = userContact.isPremium();
 
-        assertTrue(userContact.isPremium());
+        assertTrue("Premium: " + premium + " | lower border: " + (long)(currentTimestamp + THREE_MONTH -1500),premium >= (currentTimestamp + THREE_MONTH -1500));
+        assertTrue("Premium: " + premium + " | upper border: " + (long)(currentTimestamp + THREE_MONTH +1500),premium < currentTimestamp + THREE_MONTH +1500);
+
+        assertTrue(isPremium);
     }
 
     @Test
     public void contactTest() {
-        UserContact userContact = new UserContact("+33 7 53 00 00 01", null);
+        Contacts contacts = Contacts.getInstance();
+        contacts.addUserContact("+33 7 53 00 00 01");
 
-        Contact contact = new Contact("+33 7 53 00 00 02",null);
-        Contact checkContact = new Contact("+33 7 53 00 00 02",this);
+        UserContact userContact = contacts.getUserContact();
 
-        contact.setOnline();
-        checkContact.setOnline();
+        Contact contact2 = new Contact("+33 7 53 00 00 02",null);
+        Contact checkContact2 = new Contact("+33 7 53 00 00 02",this);
+
+        contact2.setOnline();
+        checkContact2.setOnline();
 
         checkFlags(true);
 
         //It is not possible to set the name for a contact
-        //contact.setName("Test");
+        contact2.setName("Shouldn't be set");
 
-        String name = checkContact.getName();
+        String name = checkContact2.getName();
 
-        assertEquals("name02",name);
+        assertEquals("onlineName2",name);
 
-        checkContact = new Contact("+33 7 53 00 00 01",this);
-        checkContact.setOnline();
-
-        checkFlags(true);
-        name = checkContact.getName();
-
-        assertEquals("+33 7 53 00 00 01",name);
-
-        userContact.setName("test name");
-        userContact.setImageID("testImage.jpg");
+        checkContact2 = new Contact("+33 7 53 00 00 01",this);
+        checkContact2.setOnline();
 
         checkFlags(true);
+        name = checkContact2.getName();
 
-        name = checkContact.getName();
+        assertEquals("onlineName1",name);
 
-        assertEquals("test name",name);
+        userContact.setName("changedName");
+        userContact.setImageID("changedImage.jpg");
 
-        String imageID = checkContact.getImageID();
+        checkFlags(true);
+
+        name = checkContact2.getName();
+
+        assertEquals("changedName",name);
+
+        String imageID = checkContact2.getImageID();
 
         assertEquals("dummy.jpg",imageID);
 
         checkFlags(true);
 
-        imageID = checkContact.getImageID();
+        imageID = checkContact2.getImageID();
 
-        assertEquals("testImage.jpg",imageID);
+        assertEquals("changedImage.jpg",imageID);
         //It is not possible to delete a contact
         //contact.delete();
     }
 
     @Test
-    public void unknownContactTest() {
-        Contact contact = new Contact("+33 7 53 00 00 09",this);
+    public void contactsTest() {
+        Contacts contacts = Contacts.getInstance(this);
+        contacts.addUserContact("+33 7 53 00 00 01");
 
-        contact.setOnline();
+        checkFlags(true);
+
+        List<Contact> all = contacts.getAll(false,"");
+        List<Contact> displayed = contacts.getAllDisplayed(false,"");
+
+        contacts.add("+33 7 53 00 00 02","known_group_02");
+        contacts.add("+33 7 53 00 00 03","known_03");
+
+        contacts.add("+33 7 53 00 00 15","fake15");
+        contacts.add("+33 7 53 00 00 16","fake_group_16");
+        contacts.add("+33 7 53 00 00 17","fake_name_17");
+
+        contacts.get("+33 7 53 00 00 02").setDisplayed(true);
+        contacts.get("+33 7 53 00 00 15").setDisplayed(true);
+        contacts.get("+33 7 53 00 00 16").setDisplayed(true);
+        contacts.get("+33 7 53 00 00 17").setDisplayed(true);
+
         delay();
 
-        String name = contact.getName();
-        assertEquals("+33 7 53 00 00 09",name);
+        contacts.get("+33 7 53 00 00 17").setDisplayed(false);
 
-        String imageID = contact.getImageID();
-        assertEquals("dummy.jpg",imageID);
+        checkFlags(true);
+
+        //get All
+        assertEquals(2,all.size());
+        assertEquals(1,displayed.size());
+
+        contacts.getAll(true,"");
+
+        assertEquals(5,all.size());
+        assertEquals(3,displayed.size());
+
+        contacts.getAll(true,"name");
+
+        assertEquals(3,all.size());
+        assertEquals(1,displayed.size());
+
+        contacts.add("+33 7 53 00 00 04","known_group_04");
+
+        checkFlags(true);
+
+        assertEquals(4,all.size());
+        assertEquals(1,displayed.size());
+
+        contacts.getAll(false,"");
+
+        assertEquals(3,all.size());
+        assertEquals(1,displayed.size());
+
+        contacts.getAll(true,"");
+
+        assertEquals(6,all.size());
+        assertEquals(3,displayed.size());
+
+        contacts.add("+33 7 53 00 00 18","fake_name_18");
+
+        assertEquals(7,all.size());
+        assertEquals(3,displayed.size());
 
         checkFlags(false);
-
-        name = contact.getName();
-        assertEquals("+33 7 53 00 00 09",name);
-
-        imageID = contact.getImageID();
-        assertEquals("dummy.jpg",imageID);
     }
 
     @Override

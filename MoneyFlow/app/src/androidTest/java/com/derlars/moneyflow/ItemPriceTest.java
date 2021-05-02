@@ -22,6 +22,8 @@ public class ItemPriceTest extends BaseUnitTest implements BaseCallback {
     public void before() {
         setFlags("isUpdated");
 
+        authenticate("+33 7 53 00 00 01","123456");
+
         ItemPrice preset = new ItemPrice("OnlineTest",null);
         preset.setOnline();
         preset.delete();

@@ -3,6 +3,7 @@ package com.derlars.moneyflow.Resource.Abstracts;
 import com.derlars.moneyflow.Database.Abstracts.BaseCallback;
 import com.derlars.moneyflow.Database.HashMapValue;
 import com.derlars.moneyflow.Database.Value;
+import com.derlars.moneyflow.Resource.Purchase;
 
 public abstract class BaseContact<Callback extends BaseCallback> extends BaseResource<Callback> {
     protected Value<String> userID;
@@ -10,7 +11,7 @@ public abstract class BaseContact<Callback extends BaseCallback> extends BaseRes
     protected Value<String> name;
     protected Value<String> imageID;
 
-    protected HashMapValue<String> purchases;
+    protected HashMapValue<Long> purchases;
 
     protected String phone;
 
@@ -31,6 +32,13 @@ public abstract class BaseContact<Callback extends BaseCallback> extends BaseRes
     }
 
     protected abstract void initialize();
+
+    public void addPurchase(Purchase purchase, long timestamp) {
+        purchases.put(purchase.getKey(), timestamp);
+        if(isOnline()) {
+            purchase.setOnline();
+        }
+    }
 
     public String getPhone() {
         return phone;

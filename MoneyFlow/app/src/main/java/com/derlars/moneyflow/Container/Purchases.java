@@ -5,8 +5,10 @@ import com.derlars.moneyflow.Database.Abstracts.BaseCallback;
 import com.derlars.moneyflow.Resource.Contact;
 import com.derlars.moneyflow.Resource.Purchase;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class Purchases extends BaseContainer<Purchase> {
@@ -33,6 +35,64 @@ public class Purchases extends BaseContainer<Purchase> {
         INSTANCE = null;
     }
 
+    public void add(String key) {
+        if(!collection.containsKey(key)) {
+            this.collection.put(key, new Purchase(key,this));
+            this.collection.get(key).setOnline();
+
+            organizeLists(this.includeOffline, this.searchWord);
+        }
+    }
+
+    @Override
+    public Purchase get(String key) {
+        Purchase p = null;
+
+        if(this.collection.containsKey(key)) {
+            p = this.collection.get(key);
+            List<String> keyList = p.getItemKeyList();
+
+            Items items = Items.getInstance();
+            if(items != null) {
+                for(String s : keyList) {
+                    items.get(s);
+                }
+
+            }
+        }
+        return p;
+    }
+
+    @Override
+    public List<Purchase> getAll(boolean includeOffline, String searchWord) {
+        Contacts contacts = Contacts.getInstance();
+        if(contacts != null) {
+            contacts.getUserContact().getPurchases();
+        }
+
+        return super.getAll(includeOffline,searchWord);
+    }
+
+    @Override
+    public List<Purchase> getAllSelected(boolean includeOffline, String searchWord) {
+        Contacts contacts = Contacts.getInstance();
+        if(contacts != null) {
+            contacts.getUserContact().getPurchases();
+        }
+
+        return super.getAllSelected(includeOffline, searchWord);
+    }
+
+    @Override
+    public List<Purchase> getAllDisplayed(boolean includeOffline, String searchWord) {
+        Contacts contacts = Contacts.getInstance();
+        if(contacts != null) {
+            contacts.getUserContact().getPurchases();
+        }
+
+        return super.getAllDisplayed(includeOffline, searchWord);
+    }
+
     @Override
     protected void organizeLists(boolean includeOffline, String searchWord) {
         this.includeOffline = includeOffline;
@@ -41,16 +101,8 @@ public class Purchases extends BaseContainer<Purchase> {
         this.all.clear();
         this.selected.clear();
         this.displayed.clear();
-        Set<String> keySet = new HashSet();
-        boolean success;
-        do {
-            try {
-                keySet = new HashSet(this.collection.keySet());
-                success = true;
-            } catch (ConcurrentModificationException ex) {
-                success = false;
-            }
-        }while(!success);
+
+        Set<String> keySet = getKeySet();
 
         for(String key : keySet) {
             Purchase t = collection.get(key);

@@ -1,8 +1,11 @@
 package com.derlars.moneyflow.Resource.Abstracts;
 
+import com.derlars.moneyflow.Container.Contacts;
 import com.derlars.moneyflow.Database.Abstracts.BaseCallback;
 import com.derlars.moneyflow.Database.Abstracts.Subscriptable;
 import com.derlars.moneyflow.Database.Callbacks.BaseValueCallback;
+
+import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class BaseResource<Callback extends BaseCallback> extends Subscriptable<Callback> implements BaseValueCallback, Comparable<BaseResource> {
     protected String pathRoot;
@@ -21,11 +24,11 @@ public abstract class BaseResource<Callback extends BaseCallback> extends Subscr
         super(callback);
 
         String timestamp = ""+System.currentTimeMillis();
-        String creator = "DUMMY";
+        String creator = Contacts.getInstance().getUserContact().getPhone();
 
         this.pathRoot = pathRoot;
 
-        this.key = creator + "_" + timestamp;
+        this.key = creator + "_" + timestamp + "_" + ThreadLocalRandom.current().nextInt();
 
         this.path = this.pathRoot + "/" + this.key;
 
@@ -58,6 +61,8 @@ public abstract class BaseResource<Callback extends BaseCallback> extends Subscr
 
     public void setSelected(boolean selected) {
         this.selected = selected;
+
+        notifyUpdate(this.key);
     }
 
     public boolean isSelected() {
@@ -66,6 +71,8 @@ public abstract class BaseResource<Callback extends BaseCallback> extends Subscr
 
     public void setDisplayed(boolean displayed) {
         this.displayed = displayed;
+
+        notifyUpdate(this.key);
     }
 
     public boolean isDisplayed() {
